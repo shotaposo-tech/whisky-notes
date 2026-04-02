@@ -12,7 +12,6 @@
         body { -webkit-touch-callout: none; -webkit-user-select: none; }
         .hidden { display: none !important; }
         .amber-gradient { background: linear-gradient(135deg, #d97706 0%, #78350f 100%); }
-        /* ローディング表示用 */
         #loading-view { background: #1c1917; }
     </style>
 </head>
@@ -28,7 +27,6 @@
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
             Googleでログイン
         </button>
-        <p class="mt-6 text-stone-500 text-sm">Tasting logs for enthusiasts.</p>
     </div>
 
     <header class="amber-gradient text-white p-6 shadow-md sticky top-0 z-40">
@@ -36,34 +34,29 @@
     </header>
 
     <main id="app-content" class="p-4 max-w-md mx-auto">
-        <section class="bg-white rounded-xl shadow-sm p-5 mb-8">
+        <section class="bg-white rounded-xl shadow-sm p-5 mb-8 border border-stone-200">
             <h2 class="font-bold border-b border-stone-200 pb-2 mb-4 text-amber-900">Add New Note</h2>
             <div class="space-y-4">
-                <input type="text" id="whisky-name" placeholder="銘柄名 (例: Ben Nevis 1996)" class="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg outline-amber-600">
+                <input type="text" id="whisky-name" placeholder="銘柄名 (例: Clynelish 14y)" class="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg outline-amber-600">
                 <div class="flex gap-2">
-                    <input type="text" id="whisky-distillery" placeholder="蒸留所" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg">
-                    <input type="number" id="whisky-vintage" placeholder="Vintage" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg">
+                    <input type="text" id="whisky-distillery" placeholder="蒸留所" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm">
+                    <input type="number" id="whisky-vintage" placeholder="Year" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm">
                 </div>
                 <div>
                     <label class="text-sm text-stone-500 mb-1 block font-medium">麦感 (Malty Score: 1-5)</label>
                     <input type="range" id="malty-score" min="1" max="5" step="1" value="3" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-700">
                 </div>
-                <textarea id="whisky-note" placeholder="テイスティングノート、評価など..." class="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg h-24"></textarea>
+                <textarea id="whisky-note" placeholder="テイスティングノート..." class="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg h-24 text-sm"></textarea>
                 <button id="save-btn" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg active:opacity-80 transition-opacity">保存する</button>
             </div>
         </section>
 
-        <div id="notes-list" class="space-y-4">
-            </div>
+        <div id="notes-list" class="space-y-4"></div>
     </main>
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-md border border-stone-200 rounded-full shadow-2xl flex justify-around p-2 z-40">
-        <button class="flex flex-col items-center p-2 text-amber-700">
-            <span class="text-xs font-bold font-serif italic text-lg">W.N.</span>
-        </button>
-        <button id="logout-btn" class="flex flex-col items-center p-2 text-stone-400 active:text-red-500">
-            <span class="text-xs">Sign Out</span>
-        </button>
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-md border border-stone-200 rounded-full shadow-2xl flex justify-around p-2 z-40 text-stone-400">
+        <button class="p-2 text-amber-700 font-serif italic font-bold">W.N.</button>
+        <button id="logout-btn" class="p-2 text-[10px] uppercase font-bold tracking-tighter">Sign Out</button>
     </nav>
 
     <script type="module">
@@ -88,48 +81,30 @@
 
         let currentUser = null;
 
-        // ログインボタンの処理 (リダイレクト方式)
-        document.getElementById('login-btn').onclick = () => {
-            signInWithRedirect(auth, provider);
-        };
+        document.getElementById('login-btn').onclick = () => signInWithRedirect(auth, provider);
+        document.getElementById('logout-btn').onclick = () => { if(confirm("ログアウトしますか？")) signOut(auth); };
 
-        // ログアウト処理
-        document.getElementById('logout-btn').onclick = () => {
-            if(confirm("ログアウトしますか？")) signOut(auth);
-        };
-
-        // 状態監視
         onAuthStateChanged(auth, async (user) => {
-            const loadingView = document.getElementById('loading-view');
-            const loginOverlay = document.getElementById('login-overlay');
-
+            const loading = document.getElementById('loading-view');
+            const overlay = document.getElementById('login-overlay');
             if (user) {
                 currentUser = user;
-                loginOverlay.classList.add('hidden');
-                loadingView.classList.add('hidden');
+                overlay.classList.add('hidden');
+                loading.classList.add('hidden');
                 loadNotes();
             } else {
                 currentUser = null;
-                // リダイレクト結果を確認
-                try {
-                    await getRedirectResult(auth);
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                }
-                loginOverlay.classList.remove('hidden');
-                loadingView.classList.add('hidden');
+                await getRedirectResult(auth).catch(e => console.error(e));
+                overlay.classList.remove('hidden');
+                loading.classList.add('hidden');
             }
         });
 
-        // データ保存
         document.getElementById('save-btn').onclick = async () => {
-            const btn = document.getElementById('save-btn');
             const name = document.getElementById('whisky-name').value;
             if (!name) return alert("銘柄名を入力してください");
-
+            const btn = document.getElementById('save-btn');
             btn.disabled = true;
-            btn.innerText = "保存中...";
-
             try {
                 await addDoc(collection(db, "whisky_notes"), {
                     userId: currentUser.uid,
@@ -140,51 +115,29 @@
                     note: document.getElementById('whisky-note').value,
                     createdAt: serverTimestamp()
                 });
-                
-                // フォームリセット
                 document.getElementById('whisky-name').value = '';
-                document.getElementById('whisky-distillery').value = '';
-                document.getElementById('whisky-vintage').value = '';
                 document.getElementById('whisky-note').value = '';
-                document.getElementById('malty-score').value = 3;
-            } catch (e) {
-                alert("保存に失敗しました。ルールやインデックスを確認してください。");
-                console.error(e);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "保存する";
-            }
+            } catch (e) { console.error(e); } finally { btn.disabled = false; }
         };
 
-        // データ読み込み
         function loadNotes() {
-            const q = query(
-                collection(db, "whisky_notes"),
-                where("userId", "==", currentUser.uid),
-                orderBy("createdAt", "desc")
-            );
-
-            onSnapshot(q, (snapshot) => {
+            const q = query(collection(db, "whisky_notes"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snaps) => {
                 const list = document.getElementById('notes-list');
                 list.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const item = document.createElement('div');
-                    item.className = "bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-700 active:bg-stone-50 transition-colors";
-                    item.innerHTML = `
-                        <div class="flex justify-between items-start mb-1">
-                            <h3 class="font-bold text-lg text-stone-800">${data.name}</h3>
-                            <div class="flex flex-col items-end">
-                                <span class="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Malty: ${data.maltyScore}</span>
-                            </div>
+                snaps.forEach((doc) => {
+                    const d = doc.data();
+                    const el = document.createElement('div');
+                    el.className = "bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-700";
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-stone-800">${d.name}</h3>
+                            <span class="text-[10px] font-bold bg-amber-100 px-2 py-0.5 rounded-full">MALTY: ${d.maltyScore}</span>
                         </div>
-                        <div class="text-xs text-stone-400 flex gap-2 mb-3">
-                            <span>${data.distillery || 'Unknown Distillery'}</span>
-                            <span>${data.vintage ? '• ' + data.vintage : ''}</span>
-                        </div>
-                        <p class="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap italic">"${data.note || 'No notes...'}"</p>
+                        <p class="text-[10px] text-stone-400 mt-1">${d.distillery || ''} ${d.vintage || ''}</p>
+                        <p class="text-sm mt-2 text-stone-600 whitespace-pre-wrap leading-relaxed">${d.note || ''}</p>
                     `;
-                    list.appendChild(item);
+                    list.appendChild(el);
                 });
             });
         }
