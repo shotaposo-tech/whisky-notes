@@ -29,10 +29,19 @@
         .star-rating input[type="radio"]:checked ~ label { color: #f59e0b; }
         .star-rating label:hover, .star-rating label:hover ~ label { color: #fbbf24; }
         
+        /* モーダル内の画像サイズ調整：アップになりすぎないよう横幅を100%に制限 */
         #wheel-content {
-            max-height: 80vh;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background-color: #f5f5f4; /* 写真の背景色に合わせる */
+        }
+        #wheel-content img {
+            width: 100%;
+            height: auto;
+            max-width: 500px; /* PC閲覧時などの肥大化防止 */
+            object-fit: contain;
         }
     </style>
 </head>
@@ -60,29 +69,26 @@
         <h1 class="text-xl font-serif font-bold tracking-[0.2em] uppercase italic">Whisky Notes</h1>
     </header>
 
-    <button id="open-wheel" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-24 h-12 bg-stone-800 text-amber-500 rounded-3xl shadow-2xl flex items-center justify-center border border-stone-700 active:scale-90 transition-transform">
-        <span class="text-lg font-serif font-bold italic tracking-widest">W.N.</span>
+    <button id="open-wheel" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-stone-900 text-amber-500 rounded-full shadow-2xl flex items-center justify-center border-2 border-amber-600 active:scale-90 transition-transform">
+        <span class="text-[10px] font-bold text-center leading-tight">Flavor<br>Wheel</span>
     </button>
 
-    <div id="wheel-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex items-center justify-center p-4" onclick="closeWheel()">
+    <div id="wheel-modal" class="fixed inset-0 z-[100] bg-black/80 hidden flex items-center justify-center p-4" onclick="closeWheel()">
         <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
             <div class="p-3 border-b flex justify-between items-center bg-stone-50">
-                <span class="text-xs font-bold text-stone-500">FLAVOR WHEEL</span>
-                <div class="flex gap-4">
-                    <a href="IMG_8379.webp" target="_blank" class="text-amber-700 text-xs font-bold underline">全画面表示</a>
-                    <button onclick="closeWheel()" class="text-stone-400 hover:text-stone-900 text-2xl font-bold leading-none">&times;</button>
-                </div>
+                <span class="text-xs font-bold text-stone-500 uppercase tracking-widest">Flavor Wheel</span>
+                <button onclick="closeWheel()" class="text-stone-400 hover:text-stone-900 text-2xl font-bold leading-none">&times;</button>
             </div>
             <div id="wheel-content">
-                <img src="IMG_8379.webp" class="w-[250%] max-w-none md:w-full h-auto" alt="Flavor Wheel">
+                <img src="IMG_8379.webp" alt="Flavor Wheel">
             </div>
             <div class="p-3 bg-stone-50 text-center">
-                <p class="text-[10px] text-stone-400">ピンチ操作やスクロールで詳細を確認できます</p>
+                <p class="text-[10px] text-stone-400">タップして詳細を確認できます</p>
             </div>
         </div>
     </div>
 
-    <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-24">
+    <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-20">
         
         <div class="mb-6 sticky top-[88px] z-30">
             <input type="text" id="search-input" placeholder="コレクションを検索 (銘柄、蒸留所...)" class="w-full p-3 shadow-md border border-stone-200 rounded-full bg-white/95 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
@@ -106,12 +112,12 @@
             <input type="text" id="whisky-cask" placeholder="カスクタイプ" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
 
             <div class="flex items-end gap-6 mb-6 border-b border-stone-100 pb-4">
-                <div class="w-2/5">
+                <div class="w-1/2">
                     <label class="text-[10px] text-stone-400 font-bold ml-1 uppercase block mb-1">Tasting Date</label>
                     <input type="date" id="whisky-date" class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
                 </div>
-                <div class="w-3/5 flex flex-col items-end">
-                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider mb-1 mr-1">RATING</span>
+                <div class="w-1/2 flex flex-col items-end">
+                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider mb-1 mr-1">Rating</span>
                     <div class="star-rating">
                         <input type="radio" id="star5" name="rating" value="5" /><label for="star5">★</label>
                         <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
@@ -142,7 +148,6 @@
             </button>
         </div>
 
-        <div id="search-status" class="text-xs text-stone-400 mb-4 px-2 hidden"></div>
         <div id="notes-list" class="space-y-5"></div>
     </main>
 
@@ -164,8 +169,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);
-
-        let allNotes = [];
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
@@ -189,64 +192,34 @@
             try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
         };
 
-        $("search-input").oninput = (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = allNotes.filter(note => 
-                (note.name || "").toLowerCase().includes(term) ||
-                (note.distillery || "").toLowerCase().includes(term) ||
-                (note.region || "").toLowerCase().includes(term)
-            );
-            renderNotes(filtered);
-            const status = $("search-status");
-            if (term) {
-                status.innerText = `${filtered.length} 件見つかりました`;
-                status.classList.remove("hidden");
-            } else {
-                status.classList.add("hidden");
-            }
-        };
-
         function loadNotes(uid) {
             const q = query(collection(db, "whisky_notes"), where("userId", "==", uid), orderBy("createdAt", "desc"));
             onSnapshot(q, (snapshot) => {
-                allNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderNotes(allNotes);
+                renderNotes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             });
         }
 
         function renderNotes(notes) {
             const list = $("notes-list");
-            list.innerHTML = "";
-            if (notes.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-stone-400 bg-white rounded-2xl border border-dashed">該当するノートがありません</div>`;
-                return;
-            }
-            notes.forEach((data) => {
+            list.innerHTML = notes.map(data => {
                 const rating = data.rating || 0;
-                let starsHtml = '';
-                for(let i=1; i<=5; i++) starsHtml += i <= rating ? '<span class="text-amber-500">★</span>' : '<span class="text-stone-300">★</span>';
-                const card = document.createElement("div");
-                card.className = "bg-white p-6 rounded-2xl shadow-sm border border-stone-100 mb-4";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold text-xl text-stone-900 leading-tight">${escapeHtml(data.name || "Unnamed")}</h3>
-                        <div class="text-sm flex items-center bg-stone-50 px-2 py-1 rounded-lg border border-stone-100">${starsHtml}</div>
-                    </div>
-                    <div class="text-[11px] text-stone-500 mb-4 pb-2 border-b border-stone-100 grid grid-cols-2 gap-y-1">
-                        <div><span class="text-stone-300 uppercase">Dist:</span> ${escapeHtml(data.distillery || "-")}</div>
-                        <div><span class="text-stone-300 uppercase">Region:</span> ${escapeHtml(data.region || "-")}</div>
-                        <div><span class="text-stone-300 uppercase">Year:</span> ${escapeHtml(data.vintage || "-")}</div>
-                        <div><span class="text-stone-300 uppercase">ABV:</span> ${data.abv ? escapeHtml(data.abv) + '%' : "-"}</div>
-                        <div class="col-span-2"><span class="text-stone-300 uppercase">Date:</span> ${data.tastingDate || "-"}</div>
-                    </div>
-                    <div class="space-y-3 text-sm text-stone-700">
-                        ${data.nose ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">NOSE</span><p>${escapeHtml(data.nose)}</p></div>` : ''}
-                        ${data.palate ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">PALATE</span><p>${escapeHtml(data.palate)}</p></div>` : ''}
-                        ${data.finish ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">FINISH</span><p>${escapeHtml(data.finish)}</p></div>` : ''}
+                let stars = '';
+                for(let i=1; i<=5; i++) stars += i <= rating ? '★' : '☆';
+                return `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg text-stone-900">${escapeHtml(data.name)}</h3>
+                            <span class="text-amber-500 text-sm">${stars}</span>
+                        </div>
+                        <p class="text-xs text-stone-500 mb-4">${data.tastingDate || ''}</p>
+                        <div class="space-y-2 text-sm">
+                            ${data.nose ? `<p><span class="font-bold text-amber-800">[Nose]</span> ${escapeHtml(data.nose)}</p>` : ''}
+                            ${data.palate ? `<p><span class="font-bold text-amber-800">[Palate]</span> ${escapeHtml(data.palate)}</p>` : ''}
+                            ${data.finish ? `<p><span class="font-bold text-amber-800">[Finish]</span> ${escapeHtml(data.finish)}</p>` : ''}
+                        </div>
                     </div>
                 `;
-                list.appendChild(card);
-            });
+            }).join('');
         }
 
         function escapeHtml(str) {
@@ -260,7 +233,6 @@
             const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
             const btn = $("save-btn");
             btn.disabled = true;
-            btn.innerText = "Saving...";
             try {
                 await addDoc(collection(db, "whisky_notes"), {
                     userId: auth.currentUser.uid,
@@ -278,15 +250,8 @@
                     createdAt: serverTimestamp()
                 });
                 ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-nose", "whisky-palate", "whisky-finish"].forEach(id => $(id).value = "");
-                $("whisky-date").valueAsDate = new Date();
-                $("star3").checked = true;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (e) {
-                alert("保存に失敗しました。");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Add Note";
-            }
+            } catch (e) { alert("保存に失敗しました"); }
+            finally { btn.disabled = false; }
         };
     </script>
 </body>
