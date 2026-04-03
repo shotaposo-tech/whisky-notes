@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>WHISKY NOTES</title>
     <link rel="apple-touch-icon" href="IMG_8347.jpeg">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,27 +23,11 @@
         .hidden { display: none !important; }
         .amber-gradient { background: linear-gradient(135deg, #d97706 0%, #78350f 100%); }
         meta[name="apple-mobile-web-app-capable"] { content: "yes"; }
-        
-        .star-rating {
-            direction: rtl;
-            display: inline-flex;
-        }
-        .star-rating input[type="radio"] {
-            display: none;
-        }
-        .star-rating label {
-            color: #d1d5db;
-            font-size: 1.75rem;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .star-rating input[type="radio"]:checked ~ label {
-            color: #f59e0b;
-        }
-        .star-rating label:hover,
-        .star-rating label:hover ~ label {
-            color: #fbbf24;
-        }
+        .star-rating { direction: rtl; display: inline-flex; }
+        .star-rating input[type="radio"] { display: none; }
+        .star-rating label { color: #d1d5db; font-size: 1.75rem; cursor: pointer; transition: color 0.2s; }
+        .star-rating input[type="radio"]:checked ~ label { color: #f59e0b; }
+        .star-rating label:hover, .star-rating label:hover ~ label { color: #fbbf24; }
     </style>
 </head>
 <body class="bg-stone-100 min-h-screen pb-24 text-stone-900 font-sans">
@@ -52,7 +35,7 @@
     <div id="loading-view" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900 text-white">
         <div class="flex flex-col items-center gap-4">
             <div class="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
-            <p class="text-xs text-stone-400">Loading your collection...</p>
+            <p class="text-xs text-stone-400">Loading...</p>
         </div>
     </div>
 
@@ -60,12 +43,11 @@
         <div class="absolute inset-0 opacity-20" style="background-image: url('https://images.unsplash.com/photo-1527181152855-fc03fc7949c8?q=80&w=800'); background-size: cover; background-position: center;"></div>
         <div class="relative z-10 text-center">
             <h1 class="text-5xl font-serif font-bold mb-3 italic text-whisky-light tracking-tighter">Whisky Notes</h1>
-            <p class="text-stone-300 mb-12 text-sm tracking-widest">DRAMATIC TASTING LOG</p>
+            <p class="text-stone-300 mb-12 text-sm tracking-widest uppercase">Dramatic Tasting Log</p>
             <button id="login-btn" class="bg-white text-stone-900 px-8 py-4 rounded-full font-bold shadow-2xl flex items-center gap-3 active:scale-95 transition-all mx-auto">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
                 Sign in with Google
             </button>
-            <p id="error-msg" class="mt-4 text-red-400 text-[10px]"></p>
         </div>
     </div>
 
@@ -76,38 +58,29 @@
     <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-10">
         
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-stone-200">
-            <h2 class="text-xs uppercase text-stone-400 font-bold tracking-wider mb-4">New Tasting Note</h2>
+            <h2 class="text-xs uppercase text-stone-400 font-bold tracking-wider mb-4">New Entry</h2>
             
-            <input type="text" id="whisky-name" placeholder="銘柄名 (例: Laphroaig 10yo)" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base" />
+            <input type="text" id="whisky-name" placeholder="ボトル名" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base" />
             
             <div class="flex gap-2 mb-3">
-                <input type="text" id="whisky-distillery" placeholder="蒸留所/地域" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                <input type="number" id="whisky-vintage" placeholder="Year" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                <input type="text" id="whisky-distillery" placeholder="蒸留所" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                <input type="text" id="whisky-region" placeholder="地域" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
             </div>
 
-            <div class="flex gap-2 mb-5">
-                <input type="text" id="whisky-abv" placeholder="度数 % (ABV)" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                <input type="text" id="whisky-cask" placeholder="Cask Type (樽)" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <div class="flex gap-2 mb-3">
+                <input type="text" id="whisky-vintage" placeholder="年数 / ヴィンテージ (NAS等)" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                <input type="text" id="whisky-abv" placeholder="ABV %" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
             </div>
 
-            <div class="space-y-3 mb-5">
-                <div class="relative">
-                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">NOSE</span>
-                    <textarea id="whisky-nose" placeholder="香り: 潮風、ピート、レモンピール..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
-                </div>
-                <div class="relative">
-                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">PALATE</span>
-                    <textarea id="whisky-palate" placeholder="味わい: バニラの甘み、力強い煙、塩気..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
-                </div>
-                <div class="relative">
-                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">FINISH</span>
-                    <textarea id="whisky-finish" placeholder="余韻: 長く続く焚き火の煙、ドライ..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-20 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
-                </div>
-            </div>
+            <input type="text" id="whisky-cask" placeholder="カスクタイプ" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
 
-            <div class="flex items-center justify-between gap-4 pt-2 border-t border-stone-100">
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Rating</span>
+            <div class="flex items-end gap-2 mb-6 border-b border-stone-100 pb-4">
+                <div class="w-1/2">
+                    <label class="text-[10px] text-stone-400 font-bold uppercase ml-1">Tasting Date</label>
+                    <input type="date" id="whisky-date" class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+                <div class="w-1/2 flex flex-col items-center">
+                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider mb-1">Rating</span>
                     <div class="star-rating">
                         <input type="radio" id="star5" name="rating" value="5" /><label for="star5">★</label>
                         <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
@@ -116,10 +89,26 @@
                         <input type="radio" id="star1" name="rating" value="1" /><label for="star1">★</label>
                     </div>
                 </div>
-                <button id="save-btn" class="flex-1 amber-gradient text-white font-bold py-4 rounded-xl shadow-lg active:opacity-90 transition-all active:scale-95 text-lg">
-                    Add Note
-                </button>
             </div>
+
+            <div class="space-y-3 mb-6">
+                <div class="relative">
+                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">NOSE</span>
+                    <textarea id="whisky-nose" placeholder="香りについて..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
+                </div>
+                <div class="relative">
+                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">PALATE</span>
+                    <textarea id="whisky-palate" placeholder="味わいについて..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
+                </div>
+                <div class="relative">
+                    <span class="absolute top-3 left-3 text-xs font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">FINISH</span>
+                    <textarea id="whisky-finish" placeholder="余韻について..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-20 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <button id="save-btn" class="w-full amber-gradient text-white font-bold py-4 rounded-xl shadow-lg active:opacity-90 transition-all active:scale-95 text-lg">
+                Add Note
+            </button>
         </div>
 
         <div id="notes-list" class="space-y-5"></div>
@@ -131,22 +120,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import {
-            getAuth,
-            signInWithPopup,
-            GoogleAuthProvider,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import {
-            getFirestore,
-            collection,
-            addDoc,
-            query,
-            where,
-            orderBy,
-            onSnapshot,
-            serverTimestamp
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDD8ID3-DtqmA7F7Q0PgNIc4P7Ig2wEFAs",
@@ -161,6 +136,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);
+
+        // 本日の日付をデフォルトセット
+        $("whisky-date").valueAsDate = new Date();
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -177,61 +155,39 @@
 
         $("login-btn").onclick = async () => {
             const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (e) {
-                $("error-msg").innerText = "ログインに失敗しました。";
-            }
+            try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
         };
 
         function loadNotes(uid) {
-            const q = query(
-                collection(db, "whisky_notes"),
-                where("userId", "==", uid),
-                orderBy("createdAt", "desc")
-            );
-
+            const q = query(collection(db, "whisky_notes"), where("userId", "==", uid), orderBy("createdAt", "desc"));
             onSnapshot(q, (snapshot) => {
                 const list = $("notes-list");
                 list.innerHTML = "";
-                
-                if (snapshot.empty) {
-                    list.innerHTML = `
-                        <div class="text-center py-16 text-stone-400 bg-white rounded-2xl border border-stone-200 border-dashed">
-                            <div class="text-5xl mb-4 opacity-50">🥃</div>
-                            <p class="text-sm">コレクションはまだ空です</p>
-                        </div>
-                    `;
-                    return;
-                }
-
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     const rating = data.rating || 0;
                     let starsHtml = '';
-                    for(let i=1; i<=5; i++) {
-                        starsHtml += i <= rating ? '<span class="text-amber-500">★</span>' : '<span class="text-stone-300">★</span>';
-                    }
+                    for(let i=1; i<=5; i++) starsHtml += i <= rating ? '<span class="text-amber-500">★</span>' : '<span class="text-stone-300">★</span>';
 
                     const card = document.createElement("div");
                     card.className = "bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative";
                     card.innerHTML = `
-                        <div class="flex justify-between items-start gap-2 mb-2">
+                        <div class="flex justify-between items-start mb-2">
                             <h3 class="font-bold text-xl text-stone-900 leading-tight">${escapeHtml(data.name || "Unnamed")}</h3>
-                            <div class="text-sm flex items-center bg-stone-50 px-2 py-1 rounded-lg border border-stone-100">
-                                ${starsHtml}
-                            </div>
+                            <div class="text-sm flex items-center bg-stone-50 px-2 py-1 rounded-lg border border-stone-100">${starsHtml}</div>
                         </div>
-                        <p class="text-xs text-stone-500 mb-4 pb-2 border-b border-stone-100 font-mono">
-                            ${escapeHtml(data.distillery || "Distillery unknown")}
-                            ${data.vintage ? ' • ' + escapeHtml(data.vintage) : ''}
-                            ${data.abv ? ' • ' + escapeHtml(data.abv) + '%' : ''}
-                            ${data.cask ? ' • ' + escapeHtml(data.cask) : ''}
-                        </p>
+                        <div class="text-[11px] text-stone-500 mb-4 pb-2 border-b border-stone-100 grid grid-cols-2 gap-y-1">
+                            <div><span class="text-stone-300">Distillery:</span> ${escapeHtml(data.distillery || "-")}</div>
+                            <div><span class="text-stone-300">Region:</span> ${escapeHtml(data.region || "-")}</div>
+                            <div><span class="text-stone-300">Year:</span> ${escapeHtml(data.vintage || "-")}</div>
+                            <div><span class="text-stone-300">ABV:</span> ${data.abv ? escapeHtml(data.abv) + '%' : "-"}</div>
+                            <div class="col-span-2"><span class="text-stone-300">Cask:</span> ${escapeHtml(data.cask || "-")}</div>
+                            <div class="col-span-2"><span class="text-stone-300">Date:</span> ${data.tastingDate || "-"}</div>
+                        </div>
                         <div class="space-y-3.5 text-sm text-stone-700">
-                            ${data.nose ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center">NOSE</span><p>${escapeHtml(data.nose)}</p></div>` : ''}
-                            ${data.palate ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center">PALATE</span><p>${escapeHtml(data.palate)}</p></div>` : ''}
-                            ${data.finish ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center">FINISH</span><p>${escapeHtml(data.finish)}</p></div>` : ''}
+                            ${data.nose ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Nose</span><p>${escapeHtml(data.nose)}</p></div>` : ''}
+                            ${data.palate ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Palate</span><p>${escapeHtml(data.palate)}</p></div>` : ''}
+                            ${data.finish ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Finish</span><p>${escapeHtml(data.finish)}</p></div>` : ''}
                         </div>
                     `;
                     list.appendChild(card);
@@ -246,12 +202,10 @@
 
         $("save-btn").onclick = async () => {
             const name = $("whisky-name").value.trim();
-            if (!name) return alert("銘柄名を入力してください");
+            if (!name) return alert("ボトル名を入力してください");
 
-            const ratingElement = document.querySelector('input[name="rating"]:checked');
-            const rating = ratingElement ? Number(ratingElement.value) : 0;
+            const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
             const btn = $("save-btn");
-
             btn.disabled = true;
             btn.innerText = "Saving...";
 
@@ -260,9 +214,11 @@
                     userId: auth.currentUser.uid,
                     name: name,
                     distillery: $("whisky-distillery").value.trim(),
-                    vintage: $("whisky-vintage").value,
+                    region: $("whisky-region").value.trim(),
+                    vintage: $("whisky-vintage").value.trim(),
                     abv: $("whisky-abv").value.trim(),
                     cask: $("whisky-cask").value.trim(),
+                    tastingDate: $("whisky-date").value,
                     nose: $("whisky-nose").value.trim(),
                     palate: $("whisky-palate").value.trim(),
                     finish: $("whisky-finish").value.trim(),
@@ -270,10 +226,10 @@
                     createdAt: serverTimestamp()
                 });
                 
-                ["whisky-name", "whisky-distillery", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-nose", "whisky-palate", "whisky-finish"].forEach(id => $(id).value = "");
+                ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-nose", "whisky-palate", "whisky-finish"].forEach(id => $(id).value = "");
+                $("whisky-date").valueAsDate = new Date();
                 $("star3").checked = true;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-
             } catch (e) {
                 alert("保存に失敗しました。");
             } finally {
