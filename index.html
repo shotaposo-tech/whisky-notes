@@ -61,8 +61,8 @@
         <h1 class="text-xl font-serif font-bold tracking-[0.2em] uppercase italic">Whisky Notes</h1>
     </header>
 
-    <button id="open-wheel" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-stone-900 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-amber-500 active:scale-90 transition-transform">
-        <span class="text-[10px] font-bold text-center leading-tight">Flavor<br>Wheel</span>
+    <button id="open-wheel" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-stone-950 text-amber-500 rounded-full shadow-2xl flex items-center justify-center border-2 border-amber-500 active:scale-90 transition-transform">
+        <span class="text-[11px] font-bold text-center leading-tight">Flavor<br>Wheel</span>
     </button>
 
     <div id="wheel-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex items-center justify-center p-4" onclick="closeWheel()">
@@ -70,12 +70,12 @@
             <div class="p-3 border-b flex justify-between items-center bg-stone-50">
                 <span class="text-xs font-bold text-stone-500">FLAVOR WHEEL</span>
                 <div class="flex gap-4">
-                    <a href="https://singlemalt-whisky.net/wp-content/uploads/2018/09/e2ddccfb5350315020f88ac4203771e5.jpg" target="_blank" class="text-amber-700 text-xs font-bold underline">全画面表示</a>
+                    <a href="image_2.png" target="_blank" class="text-amber-700 text-xs font-bold underline">全画面表示</a>
                     <button onclick="closeWheel()" class="text-stone-400 hover:text-stone-900 text-2xl font-bold leading-none">&times;</button>
                 </div>
             </div>
             <div id="wheel-content">
-                <img src="https://singlemalt-whisky.net/wp-content/uploads/2018/09/e2ddccfb5350315020f88ac4203771e5.jpg" class="w-[200%] max-w-none md:w-full h-auto" alt="Flavor Wheel">
+                <img src="image_2.png" class="w-[200%] max-w-none md:w-full h-auto" alt="Flavor Wheel">
             </div>
             <div class="p-3 bg-stone-50 text-center">
                 <p class="text-[10px] text-stone-400">横にスクロールやピンチして確認できます</p>
@@ -92,7 +92,7 @@
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-10 border border-stone-200">
             <h2 class="text-xs uppercase text-stone-400 font-bold tracking-wider mb-4 italic">New Entry</h2>
             
-            <input type="text" id="whisky-name" placeholder="ボトル名" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input type="text" id="whisky-name" placeholder="ボトル名" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base" />
             
             <div class="flex gap-2 mb-3">
                 <input type="text" id="whisky-distillery" placeholder="蒸留所" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
@@ -106,13 +106,13 @@
 
             <input type="text" id="whisky-cask" placeholder="カスクタイプ" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
 
-            <div class="flex items-end gap-2 mb-6 border-b border-stone-100 pb-4">
-                <div class="w-1/2">
-                    <label class="text-[10px] text-stone-400 font-bold ml-1 uppercase">Tasting Date</label>
+            <div class="flex items-end gap-6 mb-6 border-b border-stone-100 pb-4">
+                <div class="w-2/5">
+                    <label class="text-[10px] text-stone-400 font-bold ml-1 uppercase block mb-1">Tasting Date</label>
                     <input type="date" id="whisky-date" class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
                 </div>
-                <div class="w-1/2 flex flex-col items-center">
-                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider mb-1">Rating</span>
+                <div class="w-3/5 flex flex-col items-end">
+                    <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wider mb-1 mr-1">RATING</span>
                     <div class="star-rating">
                         <input type="radio" id="star5" name="rating" value="5" /><label for="star5">★</label>
                         <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
