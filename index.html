@@ -12,10 +12,6 @@
 </head>
 <body class="bg-stone-100 min-h-screen pb-24 text-stone-900">
 
-    <div id="debug-log" class="fixed top-0 left-0 w-full bg-black/80 text-white text-[10px] p-1 z-[70]">
-        Initializing...
-    </div>
-
     <div id="loading-view" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900 text-white">
         <div class="flex flex-col items-center gap-4">
             <div class="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
@@ -25,13 +21,11 @@
 
     <div id="login-overlay" class="fixed inset-0 bg-stone-900 z-50 hidden flex flex-col items-center justify-center p-6 text-white">
         <h1 class="text-4xl font-serif font-bold mb-8 italic">Whisky Notes</h1>
-
-        <button id="login-btn" class="bg-white text-stone-900 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+        <button id="login-btn" class="bg-white text-stone-900 px-8 py-4 rounded-full font-bold shadow-xl flex items-center gap-3 active:scale-95">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
             Googleでログイン
         </button>
-
-        <p id="error-msg" class="mt-4 text-red-400 text-[10px] text-center whitespace-pre-wrap"></p>
+        <p id="error-msg" class="mt-4 text-red-400 text-[10px] text-center"></p>
     </div>
 
     <header class="amber-gradient text-white p-6 shadow-md sticky top-0 z-40 text-center">
@@ -53,7 +47,7 @@
 
             <textarea id="whisky-note" placeholder="テイスティングノート" class="w-full p-3 mb-3 bg-stone-50 border rounded-lg h-20 text-sm"></textarea>
 
-            <button id="save-btn" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg">
+            <button id="save-btn" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg active:opacity-90">
                 保存する
             </button>
         </div>
@@ -61,23 +55,18 @@
         <div id="notes-list" class="space-y-4"></div>
     </main>
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-md border border-stone-200 rounded-full shadow-2xl flex justify-around p-2 z-40">
-        <button class="p-2 text-amber-700 font-serif italic font-bold">W.N.</button>
-        <button id="logout-btn" class="p-2 text-[10px] text-stone-400 uppercase font-bold">Logout</button>
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[60%] max-w-[200px] bg-white/90 backdrop-blur-md border border-stone-200 rounded-full shadow-2xl flex justify-center p-2 z-40">
+        <div class="p-2 text-amber-700 font-serif italic font-bold">W.N.</div>
     </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import {
             getAuth,
-            signInWithRedirect,
             signInWithPopup,
-            getRedirectResult,
-            GoogleAuthProvider,
             onAuthStateChanged,
-            signOut,
-            setPersistence,
-            browserLocalPersistence
+            browserLocalPersistence,
+            setPersistence
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import {
             getFirestore,
@@ -96,309 +85,91 @@
             projectId: "whisky-notes-6851c",
             storageBucket: "whisky-notes-6851c.firebasestorage.app",
             messagingSenderId: "242604002071",
-            appId: "1:242604002071:web:9fb1f459b2a44672ac4552",
-            measurementId: "G-V02L78VHJP"
+            appId: "1:242604002071:web:9fb1f459b2a44672ac4552"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        const REDIRECT_FLAG = "whisky_notes_redirect_in_progress";
-
-        let notesUnsubscribe = null;
-        let authObserverInitialized = false;
-        let loginProcessing = false;
-
         const $ = (id) => document.getElementById(id);
 
-        const debug = (message) => {
-            $("debug-log").innerText = message;
-            console.log("[Whisky Notes]", message);
-        };
-
-        const showError = (message = "") => {
-            $("error-msg").innerText = message;
-        };
-
-        const setLoginButtonBusy = (busy) => {
-            const btn = $("login-btn");
-            btn.disabled = busy;
-            btn.innerHTML = busy
-                ? `
-                    <div class="animate-spin h-4 w-4 border-2 border-stone-900 border-t-transparent rounded-full"></div>
-                    処理中...
-                  `
-                : `
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
-                    Googleでログイン
-                  `;
-        };
-
-        const showLoggedOutUI = () => {
-            $("login-overlay").classList.remove("hidden");
-            $("loading-view").classList.add("hidden");
-            $("app-content").classList.add("hidden");
-            setLoginButtonBusy(false);
-        };
-
-        const showLoggedInUI = () => {
-            $("login-overlay").classList.add("hidden");
-            $("loading-view").classList.add("hidden");
-            $("app-content").classList.remove("hidden");
-            setLoginButtonBusy(false);
-        };
-
-        function clearNotesListener() {
-            if (typeof notesUnsubscribe === "function") {
-                notesUnsubscribe();
-                notesUnsubscribe = null;
+        // --- Auth & UI ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                $("login-overlay").classList.add("hidden");
+                $("loading-view").classList.add("hidden");
+                $("app-content").classList.remove("hidden");
+                loadNotes(user.uid);
+            } else {
+                $("login-overlay").classList.remove("hidden");
+                $("loading-view").classList.add("hidden");
+                $("app-content").classList.add("hidden");
             }
-        }
+        });
 
-        function resetForm() {
-            $("whisky-name").value = "";
-            $("whisky-distillery").value = "";
-            $("whisky-vintage").value = "";
-            $("malty-score").value = "3";
-            $("whisky-note").value = "";
-        }
+        $("login-btn").onclick = async () => {
+            const provider = new (await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js")).GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                $("error-msg").innerText = "ログインに失敗しました。";
+            }
+        };
 
-        function renderNoteCard(data) {
-            const div = document.createElement("div");
-            div.className = "bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-700 mb-3";
-
-            const vintageText = data.vintage ? ` / ${data.vintage}` : "";
-            const maltyText = data.maltyScore ? `Malty: ${data.maltyScore}/5` : "";
-
-            div.innerHTML = `
-                <h3 class="font-bold text-base">${escapeHtml(data.name || "")}</h3>
-                <p class="text-[10px] text-stone-400 mt-1">
-                    ${escapeHtml(data.distillery || "")}${escapeHtml(vintageText)}
-                </p>
-                <p class="text-[11px] text-amber-700 mt-1">${escapeHtml(maltyText)}</p>
-                <p class="text-sm mt-2 text-stone-600 whitespace-pre-wrap">${escapeHtml(data.note || "")}</p>
-            `;
-            return div;
-        }
-
-        function escapeHtml(str) {
-            return String(str)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#039;");
-        }
-
+        // --- Data Logic ---
         function loadNotes(uid) {
-            clearNotesListener();
-
-            const list = $("notes-list");
-            list.innerHTML = `<p class="text-xs text-stone-400">読み込み中...</p>`;
-
             const q = query(
                 collection(db, "whisky_notes"),
                 where("userId", "==", uid),
                 orderBy("createdAt", "desc")
             );
 
-            notesUnsubscribe = onSnapshot(
-                q,
-                (snapshot) => {
-                    list.innerHTML = "";
-
-                    if (snapshot.empty) {
-                        list.innerHTML = `
-                            <div class="text-center text-sm text-stone-400 py-8">
-                                まだノートがありません
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        list.appendChild(renderNoteCard(data));
-                    });
-                },
-                (error) => {
-                    console.error(error);
-                    debug("Notes Error: " + error.code);
-                    list.innerHTML = `
-                        <div class="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-4">
-                            ノートの読み込みに失敗しました。<br>
-                            ${escapeHtml(error.message || "")}
-                        </div>
+            onSnapshot(q, (snapshot) => {
+                const list = $("notes-list");
+                list.innerHTML = "";
+                if (snapshot.empty) {
+                    list.innerHTML = `<p class="text-center text-sm text-stone-400 py-8">まだノートがありません</p>`;
+                    return;
+                }
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const card = document.createElement("div");
+                    card.className = "bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-700 mb-3";
+                    card.innerHTML = `
+                        <h3 class="font-bold text-base">${data.name || ""}</h3>
+                        <p class="text-[10px] text-stone-400">${data.distillery || ""} ${data.vintage ? '/ '+data.vintage : ''}</p>
+                        <p class="text-[11px] text-amber-700 mt-1">Malty: ${data.maltyScore}/5</p>
+                        <p class="text-sm mt-2 text-stone-600 whitespace-pre-wrap">${data.note || ""}</p>
                     `;
-                }
-            );
-        }
-
-        async function handleLogin() {
-            if (loginProcessing) return;
-
-            loginProcessing = true;
-            showError("");
-            setLoginButtonBusy(true);
-            debug("Login started...");
-
-            try {
-                // まずはPopupを試す
-                await signInWithPopup(auth, provider);
-                sessionStorage.removeItem(REDIRECT_FLAG);
-                debug("Popup login success");
-            } catch (error) {
-                console.error(error);
-                debug("Popup Error: " + error.code);
-
-                // ユーザーが閉じた場合は何もしない
-                if (error.code === "auth/popup-closed-by-user") {
-                    showError("ログインがキャンセルされました。");
-                    loginProcessing = false;
-                    setLoginButtonBusy(false);
-                    return;
-                }
-
-                // popup不可環境ならredirectへフォールバック
-                const fallbackToRedirectCodes = [
-                    "auth/popup-blocked",
-                    "auth/web-storage-unsupported",
-                    "auth/operation-not-supported-in-this-environment"
-                ];
-
-                if (fallbackToRedirectCodes.includes(error.code)) {
-                    const alreadyRedirecting = sessionStorage.getItem(REDIRECT_FLAG) === "1";
-
-                    if (alreadyRedirecting) {
-                        showError("リダイレクトログインに失敗しました。ページを再読み込みして再度お試しください。");
-                        loginProcessing = false;
-                        setLoginButtonBusy(false);
-                        return;
-                    }
-
-                    sessionStorage.setItem(REDIRECT_FLAG, "1");
-                    debug("Fallback to redirect...");
-                    await signInWithRedirect(auth, provider);
-                    return;
-                }
-
-                showError(error.message || "ログインに失敗しました。");
-            }
-
-            loginProcessing = false;
-            setLoginButtonBusy(false);
-        }
-
-        async function initAuth() {
-            try {
-                debug("Setting persistence...");
-                await setPersistence(auth, browserLocalPersistence);
-                debug("Persistence set");
-            } catch (error) {
-                console.error(error);
-                debug("Persistence Error: " + error.code);
-                showError("認証の保存設定に失敗しました。");
-            }
-
-            try {
-                debug("Checking redirect result...");
-                const result = await getRedirectResult(auth);
-
-                // redirect復帰処理が終わったのでフラグ解除
-                sessionStorage.removeItem(REDIRECT_FLAG);
-
-                if (result?.user) {
-                    debug("Redirect Success: " + result.user.email);
-                } else {
-                    debug("No redirect result");
-                }
-            } catch (error) {
-                console.error(error);
-                sessionStorage.removeItem(REDIRECT_FLAG);
-                debug("Redirect Error: " + error.code);
-                showError(error.message || "リダイレクトログインに失敗しました。");
-            }
-
-            if (!authObserverInitialized) {
-                authObserverInitialized = true;
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        debug("User: " + user.email);
-                        showLoggedInUI();
-                        loadNotes(user.uid);
-                    } else {
-                        debug("No user");
-                        clearNotesListener();
-                        $("notes-list").innerHTML = "";
-                        showLoggedOutUI();
-                    }
-
-                    loginProcessing = false;
-                    setLoginButtonBusy(false);
+                    list.appendChild(card);
                 });
-            }
+            }, (err) => {
+                // インデックス作成中の場合はここにエラーが出る
+                if(err.code === 'failed-precondition') {
+                    $("notes-list").innerHTML = `<p class="text-xs text-red-500 p-4 bg-red-50 rounded">現在データベースを準備中です（あと数分）。数分後に再読み込みしてください。</p>`;
+                }
+            });
         }
 
-        $("login-btn").addEventListener("click", handleLogin);
+        $("save-btn").onclick = async () => {
+            const name = $("whisky-name").value.trim();
+            if (!name) return alert("銘柄名を入力してください");
 
-        $("logout-btn").addEventListener("click", async () => {
-            if (!confirm("Logout?")) return;
+            await addDoc(collection(db, "whisky_notes"), {
+                userId: auth.currentUser.uid,
+                name: name,
+                distillery: $("whisky-distillery").value,
+                vintage: $("whisky-vintage").value,
+                maltyScore: Number($("malty-score").value),
+                note: $("whisky-note").value,
+                createdAt: serverTimestamp()
+            });
 
-            try {
-                clearNotesListener();
-                await signOut(auth);
-                sessionStorage.removeItem(REDIRECT_FLAG);
-                debug("Logged out");
-            } catch (error) {
-                console.error(error);
-                debug("Logout Error: " + error.code);
-                showError(error.message || "ログアウトに失敗しました。");
-            }
-        });
-
-        $("save-btn").addEventListener("click", async () => {
-            showError("");
-
-            try {
-                if (!auth.currentUser) {
-                    showError("先にログインしてください。");
-                    return;
-                }
-
-                const name = $("whisky-name").value.trim();
-                const distillery = $("whisky-distillery").value.trim();
-                const vintage = $("whisky-vintage").value.trim();
-                const maltyScore = Number($("malty-score").value);
-                const note = $("whisky-note").value.trim();
-
-                if (!name) {
-                    showError("銘柄名を入力してください。");
-                    return;
-                }
-
-                await addDoc(collection(db, "whisky_notes"), {
-                    userId: auth.currentUser.uid,
-                    name,
-                    distillery,
-                    vintage,
-                    maltyScore,
-                    note,
-                    createdAt: serverTimestamp()
-                });
-
-                resetForm();
-                debug("Saved");
-            } catch (error) {
-                console.error(error);
-                debug("Save Error: " + error.code);
-                showError(error.message || "保存に失敗しました。");
-            }
-        });
-
-        initAuth();
+            $("whisky-name").value = "";
+            $("whisky-distillery").value = "";
+            $("whisky-vintage").value = "";
+            $("whisky-note").value = "";
+        };
     </script>
 </body>
 </html>
