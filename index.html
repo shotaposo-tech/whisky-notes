@@ -29,7 +29,6 @@
         .star-rating input[type="radio"]:checked ~ label { color: #f59e0b; }
         .star-rating label:hover, .star-rating label:hover ~ label { color: #fbbf24; }
         
-        /* モーダル内の画像スクロールを許可 */
         #wheel-content {
             max-height: 80vh;
             overflow: auto;
@@ -61,8 +60,8 @@
         <h1 class="text-xl font-serif font-bold tracking-[0.2em] uppercase italic">Whisky Notes</h1>
     </header>
 
-    <button id="open-wheel" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-stone-950 text-amber-500 rounded-full shadow-2xl flex items-center justify-center border-2 border-amber-500 active:scale-90 transition-transform">
-        <span class="text-[11px] font-bold text-center leading-tight">Flavor<br>Wheel</span>
+    <button id="open-wheel" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-24 h-12 bg-stone-800 text-amber-500 rounded-3xl shadow-2xl flex items-center justify-center border border-stone-700 active:scale-90 transition-transform">
+        <span class="text-lg font-serif font-bold italic tracking-widest">W.N.</span>
     </button>
 
     <div id="wheel-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex items-center justify-center p-4" onclick="closeWheel()">
@@ -70,20 +69,20 @@
             <div class="p-3 border-b flex justify-between items-center bg-stone-50">
                 <span class="text-xs font-bold text-stone-500">FLAVOR WHEEL</span>
                 <div class="flex gap-4">
-                    <a href="image_4.png" target="_blank" class="text-amber-700 text-xs font-bold underline">全画面表示</a>
+                    <a href="IMG_8379.webp" target="_blank" class="text-amber-700 text-xs font-bold underline">全画面表示</a>
                     <button onclick="closeWheel()" class="text-stone-400 hover:text-stone-900 text-2xl font-bold leading-none">&times;</button>
                 </div>
             </div>
             <div id="wheel-content">
-                <img src="image_4.png" class="w-[200%] max-w-none md:w-full h-auto" alt="Flavor Wheel">
+                <img src="IMG_8379.webp" class="w-[250%] max-w-none md:w-full h-auto" alt="Flavor Wheel">
             </div>
             <div class="p-3 bg-stone-50 text-center">
-                <p class="text-[10px] text-stone-400">横にスクロールやピンチして確認できます</p>
+                <p class="text-[10px] text-stone-400">ピンチ操作やスクロールで詳細を確認できます</p>
             </div>
         </div>
     </div>
 
-    <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-20">
+    <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-24">
         
         <div class="mb-6 sticky top-[88px] z-30">
             <input type="text" id="search-input" placeholder="コレクションを検索 (銘柄、蒸留所...)" class="w-full p-3 shadow-md border border-stone-200 rounded-full bg-white/95 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
@@ -144,7 +143,6 @@
         </div>
 
         <div id="search-status" class="text-xs text-stone-400 mb-4 px-2 hidden"></div>
-
         <div id="notes-list" class="space-y-5"></div>
     </main>
 
@@ -167,7 +165,7 @@
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);
 
-        let allNotes = []; // 検索用の全データ保持
+        let allNotes = [];
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
@@ -191,17 +189,14 @@
             try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
         };
 
-        // 検索フィルター機能
         $("search-input").oninput = (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = allNotes.filter(note => 
                 (note.name || "").toLowerCase().includes(term) ||
                 (note.distillery || "").toLowerCase().includes(term) ||
-                (note.region || "").toLowerCase().includes(term) ||
-                (note.note || "").toLowerCase().includes(term)
+                (note.region || "").toLowerCase().includes(term)
             );
             renderNotes(filtered);
-            
             const status = $("search-status");
             if (term) {
                 status.innerText = `${filtered.length} 件見つかりました`;
@@ -222,19 +217,16 @@
         function renderNotes(notes) {
             const list = $("notes-list");
             list.innerHTML = "";
-            
             if (notes.length === 0) {
                 list.innerHTML = `<div class="text-center py-10 text-stone-400 bg-white rounded-2xl border border-dashed">該当するノートがありません</div>`;
                 return;
             }
-
             notes.forEach((data) => {
                 const rating = data.rating || 0;
                 let starsHtml = '';
                 for(let i=1; i<=5; i++) starsHtml += i <= rating ? '<span class="text-amber-500">★</span>' : '<span class="text-stone-300">★</span>';
-
                 const card = document.createElement("div");
-                card.className = "bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative mb-4";
+                card.className = "bg-white p-6 rounded-2xl shadow-sm border border-stone-100 mb-4";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="font-bold text-xl text-stone-900 leading-tight">${escapeHtml(data.name || "Unnamed")}</h3>
@@ -245,13 +237,12 @@
                         <div><span class="text-stone-300 uppercase">Region:</span> ${escapeHtml(data.region || "-")}</div>
                         <div><span class="text-stone-300 uppercase">Year:</span> ${escapeHtml(data.vintage || "-")}</div>
                         <div><span class="text-stone-300 uppercase">ABV:</span> ${data.abv ? escapeHtml(data.abv) + '%' : "-"}</div>
-                        <div class="col-span-2"><span class="text-stone-300 uppercase">Cask:</span> ${escapeHtml(data.cask || "-")}</div>
                         <div class="col-span-2"><span class="text-stone-300 uppercase">Date:</span> ${data.tastingDate || "-"}</div>
                     </div>
-                    <div class="space-y-3.5 text-sm text-stone-700">
-                        ${data.nose ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Nose</span><p>${escapeHtml(data.nose)}</p></div>` : ''}
-                        ${data.palate ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Palate</span><p>${escapeHtml(data.palate)}</p></div>` : ''}
-                        ${data.finish ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded self-start mt-0.5 text-center uppercase">Finish</span><p>${escapeHtml(data.finish)}</p></div>` : ''}
+                    <div class="space-y-3 text-sm text-stone-700">
+                        ${data.nose ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">NOSE</span><p>${escapeHtml(data.nose)}</p></div>` : ''}
+                        ${data.palate ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">PALATE</span><p>${escapeHtml(data.palate)}</p></div>` : ''}
+                        ${data.finish ? `<div class="grid grid-cols-[50px,1fr] gap-2"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded h-fit text-center">FINISH</span><p>${escapeHtml(data.finish)}</p></div>` : ''}
                     </div>
                 `;
                 list.appendChild(card);
@@ -266,12 +257,10 @@
         $("save-btn").onclick = async () => {
             const name = $("whisky-name").value.trim();
             if (!name) return alert("ボトル名を入力してください");
-
             const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
             const btn = $("save-btn");
             btn.disabled = true;
             btn.innerText = "Saving...";
-
             try {
                 await addDoc(collection(db, "whisky_notes"), {
                     userId: auth.currentUser.uid,
@@ -288,7 +277,6 @@
                     rating: rating,
                     createdAt: serverTimestamp()
                 });
-                
                 ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-nose", "whisky-palate", "whisky-finish"].forEach(id => $(id).value = "");
                 $("whisky-date").valueAsDate = new Date();
                 $("star3").checked = true;
