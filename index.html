@@ -182,7 +182,9 @@
 
         const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish"];
 
+        // ドラフト保存機能
         function saveToDraft() {
+            if ($("editing-id").value) return; // 編集中の場合はドラフト保存しない
             const draft = {};
             formFields.forEach(id => draft[id] = $(id).value);
             draft.rating = document.querySelector('input[name="rating"]:checked')?.value;
@@ -275,24 +277,25 @@
             }).join('');
         }
 
-        // --- 削除機能 ---
+        // --- 【修正】削除機能 ---
         window.deleteNoteWrapper = async (id) => {
-            if (!confirm("このノートを削除しますか？")) return;
+            if (!confirm("このノートを完全に削除しますか？")) return;
             try {
-                // module内なのでインポートしたdocとdeleteDocが直接使える
                 const docRef = doc(db, "whisky_notes", id);
                 await deleteDoc(docRef);
+                // 削除成功時はアラートを出さず、Snapshotで自動更新される
             } catch (e) { 
-                console.error("Delete Error:", e);
+                console.error("Delete Error Details:", e);
                 alert("削除に失敗しました。権限や通信状況を確認してください。"); 
             }
         };
 
-        // --- 編集機能 ---
+        // --- 【修正】編集開始機能 ---
         window.startEdit = (id) => {
             const note = allNotes.find(n => n.id === id);
             if (!note) return;
 
+            // フォームに値をセット
             $("editing-id").value = id;
             $("whisky-name").value = note.name || "";
             $("whisky-distillery").value = note.distillery || "";
@@ -308,6 +311,7 @@
             const rb = document.querySelector(`input[name="rating"][value="${note.rating}"]`);
             if(rb) rb.checked = true;
 
+            // UI切り替え
             $("form-title").innerText = "Edit Entry";
             $("save-btn").innerText = "Update Note";
             $("cancel-edit").classList.remove("hidden");
@@ -331,19 +335,17 @@
             return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
         }
 
-        // --- 保存・更新機能 ---
+        // --- 【修正】保存・更新機能（二重登録防止） ---
         $("save-btn").onclick = async () => {
             const name = $("whisky-name").value.trim();
             if (!name) return alert("ボトル名を入力してください");
             
-            const editingId = $("editing-id").value;
+            const currentEditingId = $("editing-id").value; // ここで現在のIDを取得
             
-            // 重複チェック（新規保存時のみ）
-            if (!editingId) {
-                const isDuplicate = allNotes.some(n => n.name === name);
-                if (isDuplicate) {
-                    return alert("同じ名前のボトルが既に登録されています。");
-                }
+            // 重複チェック（自分自身以外の既存データと名前が被っていないか）
+            const isDuplicate = allNotes.some(n => n.name === name && n.id !== currentEditingId);
+            if (isDuplicate) {
+                return alert("同じ名前のボトルが既に登録されています。");
             }
 
             const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
@@ -367,22 +369,25 @@
             };
 
             try {
-                if (editingId) {
-                    await updateDoc(doc(db, "whisky_notes", editingId), payload);
+                if (currentEditingId) {
+                    // IDが存在する場合は「更新」
+                    const docRef = doc(db, "whisky_notes", currentEditingId);
+                    await updateDoc(docRef, payload);
                 } else {
+                    // IDがない場合は「新規作成」
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "whisky_notes"), payload);
                 }
                 resetForm();
             } catch (e) { 
-                console.error("Save Error:", e);
-                alert("保存に失敗しました"); 
+                console.error("Save Error Details:", e);
+                alert("データの保存に失敗しました。"); 
             } finally { 
                 btn.disabled = false; 
             }
         };
 
-        // --- 検索機能 ---
+        // 検索機能
         $("search-input").oninput = (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = allNotes.filter(n => 
