@@ -240,16 +240,15 @@
                 let stars = '';
                 for(let i=1; i<=5; i++) stars += i <= rating ? '★' : '☆';
                 
-                // データの詳細情報を1行にまとめる (表示条件: データが存在する場合のみ)
                 const details = [
                     data.region,
-                    data.vintage ? `${data.vintage}` : null,
+                    data.vintage,
                     data.abv ? `${data.abv}%` : null,
                     data.cask
                 ].filter(Boolean).join(' / ');
 
                 return `
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative group">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative">
                         <div class="flex justify-between items-start mb-1">
                             <h3 class="font-bold text-lg text-stone-900 leading-tight">${escapeHtml(data.name)}</h3>
                             <span class="text-amber-500 text-sm shrink-0 ml-2">${stars}</span>
@@ -269,12 +268,24 @@
                         </div>
                         <div class="flex justify-end gap-4 border-t pt-3">
                             <button onclick="startEdit('${data.id}')" class="text-xs font-bold text-amber-600 uppercase tracking-tighter">Edit</button>
-                            <button onclick="deleteNote('${data.id}')" class="text-xs font-bold text-red-400 uppercase tracking-tighter">Delete</button>
+                            <button onclick="deleteNoteWrapper('${data.id}')" class="text-xs font-bold text-red-400 uppercase tracking-tighter">Delete</button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
+        // 削除機能の修正：グローバルに関数を公開
+        window.deleteNoteWrapper = async (id) => {
+            if (!confirm("このノートを削除しますか？")) return;
+            try {
+                // moduleタイプ内なのでdoc関数を直接呼び出す
+                await deleteDoc(doc(db, "whisky_notes", id));
+            } catch (e) { 
+                console.error(e);
+                alert("削除に失敗しました"); 
+            }
+        };
 
         window.startEdit = (id) => {
             const note = allNotes.find(n => n.id === id);
@@ -303,13 +314,6 @@
 
         $("cancel-edit").onclick = () => resetForm();
 
-        window.deleteNote = async (id) => {
-            if (!confirm("このノートを削除しますか？")) return;
-            try {
-                await deleteDoc(doc(db, "whisky_notes", id));
-            } catch (e) { alert("削除に失敗しました"); }
-        };
-
         function resetForm() {
             $("editing-id").value = "";
             formFields.forEach(id => $(id).value = "");
@@ -330,6 +334,15 @@
             if (!name) return alert("ボトル名を入力してください");
             
             const editingId = $("editing-id").value;
+            
+            // 重複チェック：新規保存時のみ、同じボトル名が存在するか確認
+            if (!editingId) {
+                const isDuplicate = allNotes.some(n => n.name === name);
+                if (isDuplicate) {
+                    return alert("同じ名前のボトルが既に登録されています。");
+                }
+            }
+
             const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
             const btn = $("save-btn");
             btn.disabled = true;
