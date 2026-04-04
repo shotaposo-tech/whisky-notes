@@ -174,16 +174,14 @@
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);
 
-        let allNotes = []; // 検索・編集用に保持
+        let allNotes = [];
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
         $("whisky-date").valueAsDate = new Date();
 
-        // フォームIDのリスト
         const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish"];
 
-        // 1. 自動保存のロジック (localStorage)
         function saveToDraft() {
             const draft = {};
             formFields.forEach(id => draft[id] = $(id).value);
@@ -203,10 +201,8 @@
             }
         }
 
-        // 入力イベントで自動保存
-        [...formFields, "rating"].forEach(id => {
-            const el = $(id) || document.getElementsByName("rating")[0];
-            el.addEventListener('input', saveToDraft);
+        [...formFields].forEach(id => {
+            $(id).addEventListener('input', saveToDraft);
         });
         document.querySelectorAll('input[name="rating"]').forEach(el => el.addEventListener('change', saveToDraft));
 
@@ -215,7 +211,7 @@
                 $("login-overlay").classList.add("hidden");
                 $("loading-view").classList.add("hidden");
                 $("app-content").classList.remove("hidden");
-                loadFromDraft(); // 未送信データの復元
+                loadFromDraft();
                 loadNotes(user.uid);
             } else {
                 $("login-overlay").classList.remove("hidden");
@@ -243,13 +239,29 @@
                 const rating = data.rating || 0;
                 let stars = '';
                 for(let i=1; i<=5; i++) stars += i <= rating ? '★' : '☆';
+                
+                // データの詳細情報を1行にまとめる (表示条件: データが存在する場合のみ)
+                const details = [
+                    data.region,
+                    data.vintage ? `${data.vintage}` : null,
+                    data.abv ? `${data.abv}%` : null,
+                    data.cask
+                ].filter(Boolean).join(' / ');
+
                 return `
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative group">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg text-stone-900">${escapeHtml(data.name)}</h3>
-                            <span class="text-amber-500 text-sm">${stars}</span>
+                        <div class="flex justify-between items-start mb-1">
+                            <h3 class="font-bold text-lg text-stone-900 leading-tight">${escapeHtml(data.name)}</h3>
+                            <span class="text-amber-500 text-sm shrink-0 ml-2">${stars}</span>
                         </div>
-                        <p class="text-xs text-stone-500 mb-4">${data.tastingDate || ''} | ${escapeHtml(data.distillery || 'Unknown')}</p>
+                        
+                        <div class="text-[11px] text-stone-500 mb-1 flex flex-wrap gap-x-2">
+                            <span class="font-bold text-stone-700">${escapeHtml(data.distillery || 'Unknown')}</span>
+                            <span>${data.tastingDate || ''}</span>
+                        </div>
+
+                        ${details ? `<p class="text-[10px] text-stone-400 mb-4 italic">${escapeHtml(details)}</p>` : '<div class="mb-4"></div>'}
+
                         <div class="space-y-2 text-sm mb-4">
                             ${data.nose ? `<p><span class="font-bold text-amber-800">[Nose]</span> ${escapeHtml(data.nose)}</p>` : ''}
                             ${data.palate ? `<p><span class="font-bold text-amber-800">[Palate]</span> ${escapeHtml(data.palate)}</p>` : ''}
@@ -264,7 +276,6 @@
             }).join('');
         }
 
-        // 2. 編集機能
         window.startEdit = (id) => {
             const note = allNotes.find(n => n.id === id);
             if (!note) return;
@@ -355,7 +366,6 @@
             }
         };
 
-        // 検索機能の維持
         $("search-input").oninput = (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = allNotes.filter(n => 
