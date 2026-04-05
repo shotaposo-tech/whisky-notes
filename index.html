@@ -156,7 +156,7 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+                import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -181,7 +181,6 @@
 
         const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish"];
 
-        // 調整1: タイムゾーンを考慮して正しい今日の日付をセット
         function setTodayDate() {
             const today = new Date();
             today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -189,9 +188,8 @@
         }
         setTodayDate();
 
-        // 調整2: 下書き保存機能の復活（入力中にブラウザを閉じても安心）
         function saveToDraft() {
-            if ($("editing-id").value) return; // 編集中のデータはドラフト保存しない
+            if ($("editing-id").value) return;
             const draft = {};
             formFields.forEach(id => draft[id] = $(id).value);
             draft.rating = document.querySelector('input[name="rating"]:checked')?.value;
@@ -212,7 +210,6 @@
             }
         }
 
-        // 入力があるたびにドラフト保存
         formFields.forEach(id => $(id).addEventListener('input', saveToDraft));
         document.querySelectorAll('input[name="rating"]').forEach(el => el.addEventListener('change', saveToDraft));
 
@@ -221,7 +218,7 @@
                 $("login-overlay").classList.add("hidden");
                 $("loading-view").classList.add("hidden");
                 $("app-content").classList.remove("hidden");
-                loadFromDraft(); // ログイン時にドラフト復元
+                loadFromDraft();
                 loadNotes(user.uid);
             } else {
                 $("login-overlay").classList.remove("hidden");
@@ -235,7 +232,6 @@
             try { await signInWithPopup(auth, provider); } catch (e) { console.error("Login failed:", e); }
         };
 
-        // 調整3: 検索状態を維持しながらリストを描画する関数
         function applyFilterAndRender() {
             const term = $("search-input").value.toLowerCase();
             if (!term) {
@@ -255,14 +251,13 @@
             onSnapshot(q, (snapshot) => {
                 allNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // 新しい順に並び替え
                 allNotes.sort((a, b) => {
                     const timeA = a.createdAt?.toMillis() || 0;
                     const timeB = b.createdAt?.toMillis() || 0;
                     return timeB - timeA;
                 });
 
-                applyFilterAndRender(); // 検索中ならフィルタを維持して描画
+                applyFilterAndRender();
             }, (err) => {
                 console.error("Firestore Listen Error:", err);
             });
@@ -309,14 +304,15 @@
             }).join('');
         }
 
+        // ▼ スマホ画面でもエラー詳細が分かるように修正 ▼
         window.deleteNoteWrapper = async (id) => {
             if (!confirm("このノートを完全に削除しますか？")) return;
             try {
-                const docRef = doc(db, "whisky_notes", id);
-                await deleteDoc(docRef);
+                await deleteDoc(doc(db, "whisky_notes", id));
             } catch (e) { 
                 console.error("Delete Error:", e);
-                alert("削除に失敗しました。"); 
+                // エラーの生メッセージをアラートに追加
+                alert("削除エラー: " + e.message + "\n\n※「Missing or insufficient permissions」と出る場合はFirebaseのルール設定が必要です。"); 
             }
         };
 
@@ -354,8 +350,8 @@
             $("form-title").innerText = "New Entry";
             $("save-btn").innerText = "Add Note";
             $("cancel-edit").classList.add("hidden");
-            localStorage.removeItem("whisky_draft"); // クリア時にドラフトも削除
-            applyFilterAndRender(); // 検索状態を反映
+            localStorage.removeItem("whisky_draft");
+            applyFilterAndRender();
         }
 
         function escapeHtml(str) {
@@ -369,7 +365,6 @@
             
             const currentEditingId = $("editing-id").value;
 
-            // 調整4: 同名ボトルの重複登録防止チェックの復活
             const isDuplicate = allNotes.some(n => n.name === name && n.id !== currentEditingId);
             if (isDuplicate) {
                 return alert("同じ名前のボトルが既に登録されています。");
@@ -404,13 +399,12 @@
                 resetForm();
             } catch (e) { 
                 console.error("Save Error:", e);
-                alert("データの保存に失敗しました。"); 
+                alert("保存エラー: " + e.message); 
             } finally { 
                 btn.disabled = false; 
             }
         };
 
-        // 検索入力時の処理
         $("search-input").oninput = applyFilterAndRender;
     </script>
 </body>
