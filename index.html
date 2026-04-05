@@ -158,7 +158,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDD8ID3-DtqmA7F7Q0PgNIc4P7Ig2wEFAs",
@@ -178,13 +178,20 @@
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
-        $("whisky-date").valueAsDate = new Date();
 
         const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish"];
 
-        // ドラフト保存機能
+        // 調整1: タイムゾーンを考慮して正しい今日の日付をセット
+        function setTodayDate() {
+            const today = new Date();
+            today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+            $("whisky-date").value = today.toISOString().slice(0, 10);
+        }
+        setTodayDate();
+
+        // 調整2: 下書き保存機能の復活（入力中にブラウザを閉じても安心）
         function saveToDraft() {
-            if ($("editing-id").value) return; // 編集中の場合はドラフト保存しない
+            if ($("editing-id").value) return; // 編集中のデータはドラフト保存しない
             const draft = {};
             formFields.forEach(id => draft[id] = $(id).value);
             draft.rating = document.querySelector('input[name="rating"]:checked')?.value;
@@ -194,18 +201,19 @@
         function loadFromDraft() {
             const saved = localStorage.getItem("whisky_draft");
             if (saved) {
-                const draft = JSON.parse(saved);
-                formFields.forEach(id => { if(draft[id]) $(id).value = draft[id]; });
-                if (draft.rating) {
-                    const rb = document.querySelector(`input[name="rating"][value="${draft.rating}"]`);
-                    if(rb) rb.checked = true;
-                }
+                try {
+                    const draft = JSON.parse(saved);
+                    formFields.forEach(id => { if(draft[id]) $(id).value = draft[id]; });
+                    if (draft.rating) {
+                        const rb = document.querySelector(`input[name="rating"][value="${draft.rating}"]`);
+                        if(rb) rb.checked = true;
+                    }
+                } catch(e) { console.error("Draft parsing error", e); }
             }
         }
 
-        [...formFields].forEach(id => {
-            $(id).addEventListener('input', saveToDraft);
-        });
+        // 入力があるたびにドラフト保存
+        formFields.forEach(id => $(id).addEventListener('input', saveToDraft));
         document.querySelectorAll('input[name="rating"]').forEach(el => el.addEventListener('change', saveToDraft));
 
         onAuthStateChanged(auth, (user) => {
@@ -213,7 +221,7 @@
                 $("login-overlay").classList.add("hidden");
                 $("loading-view").classList.add("hidden");
                 $("app-content").classList.remove("hidden");
-                loadFromDraft();
+                loadFromDraft(); // ログイン時にドラフト復元
                 loadNotes(user.uid);
             } else {
                 $("login-overlay").classList.remove("hidden");
@@ -224,14 +232,39 @@
 
         $("login-btn").onclick = async () => {
             const provider = new GoogleAuthProvider();
-            try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
+            try { await signInWithPopup(auth, provider); } catch (e) { console.error("Login failed:", e); }
         };
 
+        // 調整3: 検索状態を維持しながらリストを描画する関数
+        function applyFilterAndRender() {
+            const term = $("search-input").value.toLowerCase();
+            if (!term) {
+                renderNotes(allNotes);
+                return;
+            }
+            const filtered = allNotes.filter(n => 
+                (n.name?.toLowerCase().includes(term)) || 
+                (n.distillery?.toLowerCase().includes(term)) ||
+                (n.region?.toLowerCase().includes(term))
+            );
+            renderNotes(filtered);
+        }
+
         function loadNotes(uid) {
-            const q = query(collection(db, "whisky_notes"), where("userId", "==", uid), orderBy("createdAt", "desc"));
+            const q = query(collection(db, "whisky_notes"), where("userId", "==", uid));
             onSnapshot(q, (snapshot) => {
                 allNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderNotes(allNotes);
+                
+                // 新しい順に並び替え
+                allNotes.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis() || 0;
+                    const timeB = b.createdAt?.toMillis() || 0;
+                    return timeB - timeA;
+                });
+
+                applyFilterAndRender(); // 検索中ならフィルタを維持して描画
+            }, (err) => {
+                console.error("Firestore Listen Error:", err);
             });
         }
 
@@ -239,8 +272,7 @@
             const list = $("notes-list");
             list.innerHTML = notes.map(data => {
                 const rating = data.rating || 0;
-                let stars = '';
-                for(let i=1; i<=5; i++) stars += i <= rating ? '★' : '☆';
+                let stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
                 
                 const details = [
                     data.region,
@@ -277,25 +309,21 @@
             }).join('');
         }
 
-        // --- 【修正】削除機能 ---
         window.deleteNoteWrapper = async (id) => {
             if (!confirm("このノートを完全に削除しますか？")) return;
             try {
                 const docRef = doc(db, "whisky_notes", id);
                 await deleteDoc(docRef);
-                // 削除成功時はアラートを出さず、Snapshotで自動更新される
             } catch (e) { 
-                console.error("Delete Error Details:", e);
-                alert("削除に失敗しました。権限や通信状況を確認してください。"); 
+                console.error("Delete Error:", e);
+                alert("削除に失敗しました。"); 
             }
         };
 
-        // --- 【修正】編集開始機能 ---
         window.startEdit = (id) => {
             const note = allNotes.find(n => n.id === id);
             if (!note) return;
 
-            // フォームに値をセット
             $("editing-id").value = id;
             $("whisky-name").value = note.name || "";
             $("whisky-distillery").value = note.distillery || "";
@@ -311,7 +339,6 @@
             const rb = document.querySelector(`input[name="rating"][value="${note.rating}"]`);
             if(rb) rb.checked = true;
 
-            // UI切り替え
             $("form-title").innerText = "Edit Entry";
             $("save-btn").innerText = "Update Note";
             $("cancel-edit").classList.remove("hidden");
@@ -323,32 +350,31 @@
         function resetForm() {
             $("editing-id").value = "";
             formFields.forEach(id => $(id).value = "");
-            $("whisky-date").valueAsDate = new Date();
+            setTodayDate();
             $("form-title").innerText = "New Entry";
             $("save-btn").innerText = "Add Note";
             $("cancel-edit").classList.add("hidden");
-            localStorage.removeItem("whisky_draft");
+            localStorage.removeItem("whisky_draft"); // クリア時にドラフトも削除
+            applyFilterAndRender(); // 検索状態を反映
         }
 
         function escapeHtml(str) {
-            if (!str) return "";
+            if (str === null || str === undefined) return "";
             return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
         }
 
-        // --- 【修正】保存・更新機能（二重登録防止） ---
         $("save-btn").onclick = async () => {
             const name = $("whisky-name").value.trim();
             if (!name) return alert("ボトル名を入力してください");
             
-            const currentEditingId = $("editing-id").value; // ここで現在のIDを取得
-            
-            // 重複チェック（自分自身以外の既存データと名前が被っていないか）
+            const currentEditingId = $("editing-id").value;
+
+            // 調整4: 同名ボトルの重複登録防止チェックの復活
             const isDuplicate = allNotes.some(n => n.name === name && n.id !== currentEditingId);
             if (isDuplicate) {
                 return alert("同じ名前のボトルが既に登録されています。");
             }
 
-            const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
             const btn = $("save-btn");
             btn.disabled = true;
 
@@ -364,39 +390,28 @@
                 nose: $("whisky-nose").value.trim(),
                 palate: $("whisky-palate").value.trim(),
                 finish: $("whisky-finish").value.trim(),
-                rating: rating,
+                rating: Number(document.querySelector('input[name="rating"]:checked')?.value || 0),
                 updatedAt: serverTimestamp()
             };
 
             try {
                 if (currentEditingId) {
-                    // IDが存在する場合は「更新」
-                    const docRef = doc(db, "whisky_notes", currentEditingId);
-                    await updateDoc(docRef, payload);
+                    await updateDoc(doc(db, "whisky_notes", currentEditingId), payload);
                 } else {
-                    // IDがない場合は「新規作成」
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "whisky_notes"), payload);
                 }
                 resetForm();
             } catch (e) { 
-                console.error("Save Error Details:", e);
+                console.error("Save Error:", e);
                 alert("データの保存に失敗しました。"); 
             } finally { 
                 btn.disabled = false; 
             }
         };
 
-        // 検索機能
-        $("search-input").oninput = (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = allNotes.filter(n => 
-                n.name?.toLowerCase().includes(term) || 
-                n.distillery?.toLowerCase().includes(term) ||
-                n.region?.toLowerCase().includes(term)
-            );
-            renderNotes(filtered);
-        };
+        // 検索入力時の処理
+        $("search-input").oninput = applyFilterAndRender;
     </script>
 </body>
 </html>
