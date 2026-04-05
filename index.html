@@ -91,7 +91,7 @@
     <main id="app-content" class="p-4 max-w-md mx-auto hidden pb-20">
         
         <div class="mb-6 sticky top-[88px] z-30">
-            <input type="text" id="search-input" placeholder="コレクションを検索 (銘柄、蒸留所...)" class="w-full p-3 shadow-md border border-stone-200 rounded-full bg-white/95 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input type="text" id="search-input" placeholder="Search collection (name, distillery...)" class="w-full p-3 shadow-md border border-stone-200 rounded-full bg-white/95 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
         </div>
 
         <div id="entry-form" class="bg-white rounded-2xl shadow-xl p-6 mb-10 border border-stone-200">
@@ -102,46 +102,54 @@
             
             <input type="hidden" id="editing-id" value="">
 
-            <input type="text" id="whisky-name" placeholder="ボトル名" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base" />
+            <input type="text" id="whisky-name" placeholder="Whisky Name" class="w-full p-3.5 mb-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base" />
             
             <div class="flex gap-2 mb-3">
-                <input type="text" id="whisky-distillery" placeholder="蒸留所" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
-                <input type="text" id="whisky-region" placeholder="地域" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
+                <input type="text" id="whisky-distillery" placeholder="Distillery" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
+                <input type="text" id="whisky-region" placeholder="Region" class="w-1/2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
             </div>
 
             <div class="flex gap-2 mb-3">
-                <input type="text" id="whisky-vintage" placeholder="年数 / ヴィンテージ" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
+                <input type="text" id="whisky-vintage" placeholder="Age / Vintage" class="w-2/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
                 <input type="text" id="whisky-abv" placeholder="ABV %" class="w-1/3 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
             </div>
 
-            <input type="text" id="whisky-cask" placeholder="カスクタイプ" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
+            <input type="text" id="whisky-cask" placeholder="Cask Type" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
 
             <div class="mb-6 border-t border-b border-stone-100 py-4">
                 <span class="text-[10px] text-stone-400 font-bold uppercase block mb-3 tracking-widest text-center">Flavor Profile (0-5)</span>
                 <div class="grid grid-cols-2 gap-x-6 gap-y-3">
                     <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スモーキー</label>
-                        <input type="range" id="flavor-smoky" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">フルーティー</label>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Fruity</label>
                         <input type="range" id="flavor-fruity" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                     </div>
                     <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">フローラル</label>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Floral</label>
                         <input type="range" id="flavor-floral" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                     </div>
                     <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">ウッディ</label>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Peaty</label>
+                        <input type="range" id="flavor-peaty" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Cereal</label>
+                        <input type="range" id="flavor-cereal" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Woody</label>
                         <input type="range" id="flavor-woody" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                     </div>
                     <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スパイシー</label>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Feinty</label>
+                        <input type="range" id="flavor-feinty" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Spicy</label>
                         <input type="range" id="flavor-spicy" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                     </div>
                     <div>
-                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スイート</label>
-                        <input type="range" id="flavor-sweet" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Sulphury</label>
+                        <input type="range" id="flavor-sulphury" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                     </div>
                 </div>
             </div>
@@ -166,15 +174,15 @@
             <div class="space-y-4 mb-6">
                 <div class="relative">
                     <span class="absolute top-3 left-3 text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded uppercase">Nose</span>
-                    <textarea id="whisky-nose" placeholder="香りについて..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                    <textarea id="whisky-nose" placeholder="Nose notes..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
                 </div>
                 <div class="relative">
                     <span class="absolute top-3 left-3 text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded uppercase">Palate</span>
-                    <textarea id="whisky-palate" placeholder="味わいについて..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                    <textarea id="whisky-palate" placeholder="Palate notes..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-24 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
                 </div>
                 <div class="relative">
                     <span class="absolute top-3 left-3 text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded uppercase">Finish</span>
-                    <textarea id="whisky-finish" placeholder="余韻について..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-20 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                    <textarea id="whisky-finish" placeholder="Finish notes..." class="w-full pt-10 p-3 bg-white border border-stone-200 rounded-lg h-20 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
                 </div>
             </div>
 
@@ -206,12 +214,12 @@
         const $ = (id) => document.getElementById(id);
 
         let allNotes = [];
-        let chartInstances = {}; // チャートのインスタンス管理用
+        let chartInstances = {};
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
 
-        const flavorFields = ["flavor-smoky", "flavor-fruity", "flavor-floral", "flavor-woody", "flavor-spicy", "flavor-sweet"];
+        const flavorFields = ["flavor-fruity", "flavor-floral", "flavor-peaty", "flavor-cereal", "flavor-woody", "flavor-feinty", "flavor-spicy", "flavor-sulphury"];
         const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish", ...flavorFields];
 
         function setTodayDate() {
@@ -272,7 +280,7 @@
                 : allNotes;
             
             renderNotes(filtered);
-            renderCharts(filtered); // 描画後にチャートを初期化
+            renderCharts(filtered);
         }
 
         function loadNotes(uid) {
@@ -303,7 +311,7 @@
                         </div>
                         ${details ? `<p class="text-[10px] text-stone-400 mb-3 italic">${escapeHtml(details)}</p>` : '<div class="mb-3"></div>'}
 
-                        <div class="w-full max-w-[220px] mx-auto mb-4 bg-stone-50 rounded-xl p-2">
+                        <div class="w-full max-w-[240px] mx-auto mb-4 bg-stone-50 rounded-xl p-2">
                             <canvas id="chart-${data.id}"></canvas>
                         </div>
 
@@ -321,26 +329,20 @@
             }).join('');
         }
 
-        // チャートの描画
         function renderCharts(notes) {
             notes.forEach(data => {
                 const canvas = document.getElementById(`chart-${data.id}`);
                 if (!canvas) return;
+                if (chartInstances[data.id]) { chartInstances[data.id].destroy(); }
 
-                // 既存のチャートがあれば破棄
-                if (chartInstances[data.id]) {
-                    chartInstances[data.id].destroy();
-                }
-
-                // データがない場合のデフォルト値
-                const f = data.flavors || { smoky:0, fruity:0, floral:0, woody:0, spicy:0, sweet:0 };
+                const f = data.flavors || { fruity:0, floral:0, peaty:0, cereal:0, woody:0, feinty:0, spicy:0, sulphury:0 };
 
                 chartInstances[data.id] = new Chart(canvas, {
                     type: 'radar',
                     data: {
-                        labels: ['スモーキー', 'フルーティー', 'フローラル', 'ウッディ', 'スパイシー', 'スイート'],
+                        labels: ['Fruity', 'Floral', 'Peaty', 'Cereal', 'Woody', 'Feinty', 'Spicy', 'Sulphury'],
                         datasets: [{
-                            data: [f.smoky, f.fruity, f.floral, f.woody, f.spicy, f.sweet],
+                            data: [f.fruity, f.floral, f.peaty, f.cereal, f.woody, f.feinty, f.spicy, f.sulphury],
                             backgroundColor: 'rgba(217, 119, 6, 0.2)',
                             borderColor: '#d97706',
                             borderWidth: 2,
@@ -357,7 +359,7 @@
                                 ticks: { stepSize: 1, display: false },
                                 grid: { color: 'rgba(0,0,0,0.05)' },
                                 angleLines: { color: 'rgba(0,0,0,0.05)' },
-                                pointLabels: { font: { size: 9, weight: 'bold' }, color: '#78350f' }
+                                pointLabels: { font: { size: 8, weight: 'bold' }, color: '#78350f' }
                             }
                         },
                         plugins: { legend: { display: false } }
@@ -367,10 +369,10 @@
         }
 
         window.deleteNoteWrapper = async (id) => {
-            if (!confirm("このノートを完全に削除しますか？")) return;
+            if (!confirm("Are you sure you want to delete this note?")) return;
             try {
                 await deleteDoc(doc(db, "whisky_notes", id));
-            } catch (e) { alert("削除エラー: " + e.message); }
+            } catch (e) { alert("Delete Error: " + e.message); }
         };
 
         window.startEdit = (id) => {
@@ -390,12 +392,14 @@
             $("whisky-finish").value = note.finish || "";
             
             if (note.flavors) {
-                $("flavor-smoky").value = note.flavors.smoky || 0;
                 $("flavor-fruity").value = note.flavors.fruity || 0;
                 $("flavor-floral").value = note.flavors.floral || 0;
+                $("flavor-peaty").value = note.flavors.peaty || 0;
+                $("flavor-cereal").value = note.flavors.cereal || 0;
                 $("flavor-woody").value = note.flavors.woody || 0;
+                $("flavor-feinty").value = note.flavors.feinty || 0;
                 $("flavor-spicy").value = note.flavors.spicy || 0;
-                $("flavor-sweet").value = note.flavors.sweet || 0;
+                $("flavor-sulphury").value = note.flavors.sulphury || 0;
             }
 
             const rb = document.querySelector(`input[name="rating"][value="${note.rating}"]`);
@@ -430,7 +434,7 @@
 
         $("save-btn").onclick = async () => {
             const name = $("whisky-name").value.trim();
-            if (!name) return alert("ボトル名を入力してください");
+            if (!name) return alert("Please enter Whisky Name");
             
             const btn = $("save-btn");
             btn.disabled = true;
@@ -449,12 +453,14 @@
                 finish: $("whisky-finish").value.trim(),
                 rating: Number(document.querySelector('input[name="rating"]:checked')?.value || 0),
                 flavors: {
-                    smoky: Number($("flavor-smoky").value),
                     fruity: Number($("flavor-fruity").value),
                     floral: Number($("flavor-floral").value),
+                    peaty: Number($("flavor-peaty").value),
+                    cereal: Number($("flavor-cereal").value),
                     woody: Number($("flavor-woody").value),
+                    feinty: Number($("flavor-feinty").value),
                     spicy: Number($("flavor-spicy").value),
-                    sweet: Number($("flavor-sweet").value)
+                    sulphury: Number($("flavor-sulphury").value)
                 },
                 updatedAt: serverTimestamp()
             };
@@ -468,7 +474,7 @@
                     await addDoc(collection(db, "whisky_notes"), payload);
                 }
                 resetForm();
-            } catch (e) { alert("保存エラー: " + e.message); } finally { btn.disabled = false; }
+            } catch (e) { alert("Save Error: " + e.message); } finally { btn.disabled = false; }
         };
 
         $("search-input").oninput = applyFilterAndRender;
