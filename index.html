@@ -6,6 +6,7 @@
     <title>WHISKY NOTES</title>
     <link rel="apple-touch-icon" href="IMG_8347.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -115,7 +116,37 @@
 
             <input type="text" id="whisky-cask" placeholder="カスクタイプ" class="w-full p-3 mb-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
 
-            <div class="flex items-end gap-6 mb-6 border-b border-stone-100 pb-4">
+            <div class="mb-6 border-t border-b border-stone-100 py-4">
+                <span class="text-[10px] text-stone-400 font-bold uppercase block mb-3 tracking-widest text-center">Flavor Profile (0-5)</span>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スモーキー</label>
+                        <input type="range" id="flavor-smoky" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">フルーティー</label>
+                        <input type="range" id="flavor-fruity" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">フローラル</label>
+                        <input type="range" id="flavor-floral" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">ウッディ</label>
+                        <input type="range" id="flavor-woody" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スパイシー</label>
+                        <input type="range" id="flavor-spicy" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-stone-500 font-bold uppercase block mb-1">スイート</label>
+                        <input type="range" id="flavor-sweet" min="0" max="5" step="1" value="0" class="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-end gap-6 mb-6 pb-4">
                 <div class="w-1/2">
                     <label class="text-[10px] text-stone-400 font-bold ml-1 uppercase block mb-1">Tasting Date</label>
                     <input type="date" id="whisky-date" class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none" />
@@ -156,7 +187,7 @@
     </main>
 
     <script type="module">
-                import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -175,11 +206,13 @@
         const $ = (id) => document.getElementById(id);
 
         let allNotes = [];
+        let chartInstances = {}; // チャートのインスタンス管理用
 
         window.closeWheel = () => $("wheel-modal").classList.add("hidden");
         $("open-wheel").onclick = () => $("wheel-modal").classList.remove("hidden");
 
-        const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish"];
+        const flavorFields = ["flavor-smoky", "flavor-fruity", "flavor-floral", "flavor-woody", "flavor-spicy", "flavor-sweet"];
+        const formFields = ["whisky-name", "whisky-distillery", "whisky-region", "whisky-vintage", "whisky-abv", "whisky-cask", "whisky-date", "whisky-nose", "whisky-palate", "whisky-finish", ...flavorFields];
 
         function setTodayDate() {
             const today = new Date();
@@ -234,32 +267,20 @@
 
         function applyFilterAndRender() {
             const term = $("search-input").value.toLowerCase();
-            if (!term) {
-                renderNotes(allNotes);
-                return;
-            }
-            const filtered = allNotes.filter(n => 
-                (n.name?.toLowerCase().includes(term)) || 
-                (n.distillery?.toLowerCase().includes(term)) ||
-                (n.region?.toLowerCase().includes(term))
-            );
+            const filtered = term 
+                ? allNotes.filter(n => (n.name?.toLowerCase().includes(term)) || (n.distillery?.toLowerCase().includes(term)) || (n.region?.toLowerCase().includes(term)))
+                : allNotes;
+            
             renderNotes(filtered);
+            renderCharts(filtered); // 描画後にチャートを初期化
         }
 
         function loadNotes(uid) {
             const q = query(collection(db, "whisky_notes"), where("userId", "==", uid));
             onSnapshot(q, (snapshot) => {
                 allNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                allNotes.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis() || 0;
-                    const timeB = b.createdAt?.toMillis() || 0;
-                    return timeB - timeA;
-                });
-
+                allNotes.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                 applyFilterAndRender();
-            }, (err) => {
-                console.error("Firestore Listen Error:", err);
             });
         }
 
@@ -268,13 +289,7 @@
             list.innerHTML = notes.map(data => {
                 const rating = data.rating || 0;
                 let stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-                
-                const details = [
-                    data.region,
-                    data.vintage,
-                    data.abv ? `${data.abv}%` : null,
-                    data.cask
-                ].filter(Boolean).join(' / ');
+                const details = [data.region, data.vintage, data.abv ? `${data.abv}%` : null, data.cask].filter(Boolean).join(' / ');
 
                 return `
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative">
@@ -282,13 +297,15 @@
                             <h3 class="font-bold text-lg text-stone-900 leading-tight">${escapeHtml(data.name)}</h3>
                             <span class="text-amber-500 text-sm shrink-0 ml-2">${stars}</span>
                         </div>
-                        
                         <div class="text-[11px] text-stone-500 mb-1 flex flex-wrap gap-x-2">
                             <span class="font-bold text-stone-700">${escapeHtml(data.distillery || 'Unknown')}</span>
                             <span>${data.tastingDate || ''}</span>
                         </div>
+                        ${details ? `<p class="text-[10px] text-stone-400 mb-3 italic">${escapeHtml(details)}</p>` : '<div class="mb-3"></div>'}
 
-                        ${details ? `<p class="text-[10px] text-stone-400 mb-4 italic">${escapeHtml(details)}</p>` : '<div class="mb-4"></div>'}
+                        <div class="w-full max-w-[220px] mx-auto mb-4 bg-stone-50 rounded-xl p-2">
+                            <canvas id="chart-${data.id}"></canvas>
+                        </div>
 
                         <div class="space-y-2 text-sm mb-4">
                             ${data.nose ? `<p><span class="font-bold text-amber-800">[Nose]</span> ${escapeHtml(data.nose)}</p>` : ''}
@@ -304,16 +321,56 @@
             }).join('');
         }
 
-        // ▼ スマホ画面でもエラー詳細が分かるように修正 ▼
+        // チャートの描画
+        function renderCharts(notes) {
+            notes.forEach(data => {
+                const canvas = document.getElementById(`chart-${data.id}`);
+                if (!canvas) return;
+
+                // 既存のチャートがあれば破棄
+                if (chartInstances[data.id]) {
+                    chartInstances[data.id].destroy();
+                }
+
+                // データがない場合のデフォルト値
+                const f = data.flavors || { smoky:0, fruity:0, floral:0, woody:0, spicy:0, sweet:0 };
+
+                chartInstances[data.id] = new Chart(canvas, {
+                    type: 'radar',
+                    data: {
+                        labels: ['スモーキー', 'フルーティー', 'フローラル', 'ウッディ', 'スパイシー', 'スイート'],
+                        datasets: [{
+                            data: [f.smoky, f.fruity, f.floral, f.woody, f.spicy, f.sweet],
+                            backgroundColor: 'rgba(217, 119, 6, 0.2)',
+                            borderColor: '#d97706',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointBackgroundColor: '#d97706'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 5,
+                                ticks: { stepSize: 1, display: false },
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                angleLines: { color: 'rgba(0,0,0,0.05)' },
+                                pointLabels: { font: { size: 9, weight: 'bold' }, color: '#78350f' }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            });
+        }
+
         window.deleteNoteWrapper = async (id) => {
             if (!confirm("このノートを完全に削除しますか？")) return;
             try {
                 await deleteDoc(doc(db, "whisky_notes", id));
-            } catch (e) { 
-                console.error("Delete Error:", e);
-                // エラーの生メッセージをアラートに追加
-                alert("削除エラー: " + e.message + "\n\n※「Missing or insufficient permissions」と出る場合はFirebaseのルール設定が必要です。"); 
-            }
+            } catch (e) { alert("削除エラー: " + e.message); }
         };
 
         window.startEdit = (id) => {
@@ -332,6 +389,15 @@
             $("whisky-palate").value = note.palate || "";
             $("whisky-finish").value = note.finish || "";
             
+            if (note.flavors) {
+                $("flavor-smoky").value = note.flavors.smoky || 0;
+                $("flavor-fruity").value = note.flavors.fruity || 0;
+                $("flavor-floral").value = note.flavors.floral || 0;
+                $("flavor-woody").value = note.flavors.woody || 0;
+                $("flavor-spicy").value = note.flavors.spicy || 0;
+                $("flavor-sweet").value = note.flavors.sweet || 0;
+            }
+
             const rb = document.querySelector(`input[name="rating"][value="${note.rating}"]`);
             if(rb) rb.checked = true;
 
@@ -345,7 +411,10 @@
 
         function resetForm() {
             $("editing-id").value = "";
-            formFields.forEach(id => $(id).value = "");
+            formFields.forEach(id => {
+                if (id.startsWith('flavor-')) $(id).value = 0;
+                else $(id).value = "";
+            });
             setTodayDate();
             $("form-title").innerText = "New Entry";
             $("save-btn").innerText = "Add Note";
@@ -355,7 +424,7 @@
         }
 
         function escapeHtml(str) {
-            if (str === null || str === undefined) return "";
+            if (!str) return "";
             return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
         }
 
@@ -363,13 +432,6 @@
             const name = $("whisky-name").value.trim();
             if (!name) return alert("ボトル名を入力してください");
             
-            const currentEditingId = $("editing-id").value;
-
-            const isDuplicate = allNotes.some(n => n.name === name && n.id !== currentEditingId);
-            if (isDuplicate) {
-                return alert("同じ名前のボトルが既に登録されています。");
-            }
-
             const btn = $("save-btn");
             btn.disabled = true;
 
@@ -386,23 +448,27 @@
                 palate: $("whisky-palate").value.trim(),
                 finish: $("whisky-finish").value.trim(),
                 rating: Number(document.querySelector('input[name="rating"]:checked')?.value || 0),
+                flavors: {
+                    smoky: Number($("flavor-smoky").value),
+                    fruity: Number($("flavor-fruity").value),
+                    floral: Number($("flavor-floral").value),
+                    woody: Number($("flavor-woody").value),
+                    spicy: Number($("flavor-spicy").value),
+                    sweet: Number($("flavor-sweet").value)
+                },
                 updatedAt: serverTimestamp()
             };
 
             try {
-                if (currentEditingId) {
-                    await updateDoc(doc(db, "whisky_notes", currentEditingId), payload);
+                const currentId = $("editing-id").value;
+                if (currentId) {
+                    await updateDoc(doc(db, "whisky_notes", currentId), payload);
                 } else {
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "whisky_notes"), payload);
                 }
                 resetForm();
-            } catch (e) { 
-                console.error("Save Error:", e);
-                alert("保存エラー: " + e.message); 
-            } finally { 
-                btn.disabled = false; 
-            }
+            } catch (e) { alert("保存エラー: " + e.message); } finally { btn.disabled = false; }
         };
 
         $("search-input").oninput = applyFilterAndRender;
